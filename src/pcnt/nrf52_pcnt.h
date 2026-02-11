@@ -1,5 +1,5 @@
-#ifndef NRF52_PCNT_H
-#define NRF52_PCNT_H
+#ifndef NRF52_PCNT
+#define NRF52_PCNT
 
 #ifdef __cplusplus
 extern "C" {
@@ -10,7 +10,8 @@ extern "C" {
 #include <nrfx_ppi.h>
 #include <nrfx_timer.h>
 
-// pcntInit: Initialize pulse counter on../../nrf52_pcnt.h../../nrf52_pcnt.h param pin
+// pcntInit: Initialize pulse counter on../../nrf52_pcnt.h../../nrf52_pcnt.h
+// param pin
 nrfx_err_t pcntInit(int pin);
 
 // pcntClear: Resets value of counter to zero
@@ -23,4 +24,4 @@ uint32_t pcntGetCount(void);
 }
 #endif
 
-#endif // NRF52_PCNT_H
+#endif

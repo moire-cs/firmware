@@ -71,11 +71,11 @@ static nrfx_err_t setupPPI(nrfx_gpiote_pin_t pulsePin)
 }
 
 // Public Functions
-static nrfx_err_t pcntInit(int pin)
+nrfx_err_t pcntInit(int pin)
 {
     nrfx_gpiote_pin_t pulsePin = (nrfx_gpiote_pin_t)pin;
 
-    nrfx_err_t err = setupTimer();
+    nrfx_err_t err = setupCounter();
     if (err != NRFX_SUCCESS) {
         return err;
     }
