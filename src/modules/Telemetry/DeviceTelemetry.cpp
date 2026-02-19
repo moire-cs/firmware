@@ -45,11 +45,12 @@ int32_t DeviceTelemetryModule::runOnce()
 bool DeviceTelemetryModule::handleReceivedProtobuf(const meshtastic_MeshPacket &mp, meshtastic_Telemetry *t)
 {
     if (t->which_variant == meshtastic_Telemetry_device_metrics_tag) {
-#if defined(DEBUG_PORT) && !defined(DEBUG_MUTE)
+#if (defined(DEBUG_PORT) && !defined(DEBUG_MUTE)) || defined(MOIRE_GATEWAY)
         const char *sender = getSenderShortName(mp);
 
-        LOG_INFO("(Received from %s): air_util_tx=%f, channel_utilization=%f, battery_level=%i, voltage=%f", sender,
-                 t->variant.device_metrics.air_util_tx, t->variant.device_metrics.channel_utilization,
+        LOG_INFO("(Received from %s): air_util_tx=%f, channel_utilization=%f, "
+                 "battery_level=%i, voltage=%f",
+                 sender, t->variant.device_metrics.air_util_tx, t->variant.device_metrics.channel_utilization,
                  t->variant.device_metrics.battery_level, t->variant.device_metrics.voltage);
 #endif
         nodeDB->updateTelemetry(getFrom(&mp), *t, RX_SRC_RADIO);
@@ -141,7 +142,8 @@ meshtastic_Telemetry DeviceTelemetryModule::getLocalStatsTelemetry()
         telemetry.variant.local_stats.num_tx_relay_canceled = router->txRelayCanceled;
     }
 
-    LOG_INFO("Sending local stats: uptime=%i, channel_utilization=%f, air_util_tx=%f, num_online_nodes=%i, num_total_nodes=%i",
+    LOG_INFO("Sending local stats: uptime=%i, channel_utilization=%f, "
+             "air_util_tx=%f, num_online_nodes=%i, num_total_nodes=%i",
              telemetry.variant.local_stats.uptime_seconds, telemetry.variant.local_stats.channel_utilization,
              telemetry.variant.local_stats.air_util_tx, telemetry.variant.local_stats.num_online_nodes,
              telemetry.variant.local_stats.num_total_nodes);
@@ -165,7 +167,8 @@ void DeviceTelemetryModule::sendLocalStatsToPhone()
 bool DeviceTelemetryModule::sendTelemetry(NodeNum dest, bool phoneOnly)
 {
     meshtastic_Telemetry telemetry = getDeviceTelemetry();
-    LOG_INFO("Send: air_util_tx=%f, channel_utilization=%f, battery_level=%i, voltage=%f, uptime=%i",
+    LOG_INFO("Send: air_util_tx=%f, channel_utilization=%f, battery_level=%i, "
+             "voltage=%f, uptime=%i",
              telemetry.variant.device_metrics.air_util_tx, telemetry.variant.device_metrics.channel_utilization,
              telemetry.variant.device_metrics.battery_level, telemetry.variant.device_metrics.voltage,
              telemetry.variant.device_metrics.uptime_seconds);
