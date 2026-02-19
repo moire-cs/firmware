@@ -85,8 +85,8 @@ extern "C" {
  * Buttons
  */
 #define PIN_BUTTON1 (32 + 10)
-// #define PIN_BUTTON2 (0 + 18)      // 0.18 is labeled on the board as RESET but we configure it in the bootloader as a regular
-// GPIO
+// #define PIN_BUTTON2 (0 + 18)      // 0.18 is labeled on the board as RESET
+// but we configure it in the bootloader as a regular GPIO
 
 /*
 No longer populated on PCB
@@ -99,18 +99,18 @@ No longer populated on PCB
  * I2C
  */
 
-#define WIRE_INTERFACES_COUNT 2
+#define WIRE_INTERFACES_COUNT 1
 
 // I2C bus 0
 // Routed to footprint for PCF8563TS RTC
 // Not populated on T114 V1, maybe in future?
-#define PIN_WIRE_SDA (0 + 26) // P0.26
-#define PIN_WIRE_SCL (0 + 27) // P0.27
+#define PIN_WIRE_SDA (0 + 16) // P0.26
+#define PIN_WIRE_SCL (0 + 13) // P0.27
 
 // I2C bus 1
 // Available on header pins, for general use
-#define PIN_WIRE1_SDA (0 + 16) // P0.16
-#define PIN_WIRE1_SCL (0 + 13) // P0.13
+// #define PIN_WIRE1_SDA (0 + 16) // P0.16
+// #define PIN_WIRE1_SCL (0 + 13) // P0.13
 
 // QSPI Pins
 #define PIN_QSPI_SCK (32 + 14)
@@ -133,9 +133,9 @@ No longer populated on PCB
 #define SX126X_CS (0 + 24) // FIXME - we really should define LORA_CS instead
 #define LORA_CS (0 + 24)
 #define SX126X_DIO1 (0 + 20)
-// Note DIO2 is attached internally to the module to an analog switch for TX/RX switching
-// #define SX1262_DIO3 (0 + 21)
-// This is used as an *output* from the sx1262 and connected internally to power the tcxo, do not drive from the
+// Note DIO2 is attached internally to the module to an analog switch for TX/RX
+// switching #define SX1262_DIO3 (0 + 21) This is used as an *output* from the
+// sx1262 and connected internally to power the tcxo, do not drive from the
 //    main
 // CPU?
 #define SX126X_BUSY (0 + 17)
@@ -145,7 +145,8 @@ No longer populated on PCB
 #define SX126X_DIO3_TCXO_VOLTAGE 1.8
 
 #define PIN_SPI1_MISO                                                                                                            \
-    ST7789_MISO // FIXME not really needed, but for now the SPI code requires something to be defined, pick an used GPIO
+    ST7789_MISO // FIXME not really needed, but for now the SPI code requires
+                // something to be defined, pick an used GPIO
 #define PIN_SPI1_MOSI ST7789_SDA
 #define PIN_SPI1_SCK ST7789_SCK
 
@@ -153,9 +154,9 @@ No longer populated on PCB
  * Bluetooth
  */
 
-// The bluetooth transmit power on the nRF52840 is adjustable from -20dB to +8dB in steps of 4dB
-// so NRF52_BLE_TX_POWER can be set to -20, -16, -12, -8, -4, 0 (default), 4, and 8.
-// #define NRF52_BLE_TX_POWER 8
+// The bluetooth transmit power on the nRF52840 is adjustable from -20dB to +8dB
+// in steps of 4dB so NRF52_BLE_TX_POWER can be set to -20, -16, -12, -8, -4, 0
+// (default), 4, and 8. #define NRF52_BLE_TX_POWER 8
 
 /*
  * GPS pins
@@ -163,7 +164,8 @@ No longer populated on PCB
 
 #define GPS_L76K
 
-// #define PIN_GPS_RESET (32 + 6) // An output to reset L76K GPS. As per datasheet, low for > 100ms will reset the L76K
+// #define PIN_GPS_RESET (32 + 6) // An output to reset L76K GPS. As per
+// datasheet, low for > 100ms will reset the L76K
 #define GPS_RESET_MODE LOW
 // #define PIN_GPS_EN (21)
 #define VEXT_ENABLE (0 + 21)
@@ -213,8 +215,8 @@ No longer populated on PCB
 #define ADC_MULTIPLIER (4.916F)
 
 // rf52840 AIN2 = Pin 4
-// commented out due to power leakage of 2.9mA in shutdown state see reported issue #8801
-// #define BATTERY_LPCOMP_INPUT NRF_LPCOMP_INPUT_2 //UNSAFE
+// commented out due to power leakage of 2.9mA in shutdown state see reported
+// issue #8801 #define BATTERY_LPCOMP_INPUT NRF_LPCOMP_INPUT_2 //UNSAFE
 
 // We have AIN2 with a VBAT divider so AIN2 = VBAT * (100/490)
 // We have the device going deep sleep under 3.1V, which is AIN2 = 0.63V

@@ -159,6 +159,10 @@ void EnvironmentTelemetryModule::i2cScanFinished(ScanI2C *i2cScanner)
     // order by priority of metrics/values (low top, high bottom)
 
 #if !MESHTASTIC_EXCLUDE_ENVIRONMENTAL_SENSOR
+#ifdef MOIRE_MOISTURE_SENSOR
+    // Not a real I2C device
+    addSensor<MOIREMOISTURE>(i2cScanner, ScanI2C::DeviceType::NONE);
+#endif
 #ifdef T1000X_SENSOR_EN
     // Not a real I2C device
     addSensor<T1000xSensor>(i2cScanner, ScanI2C::DeviceType::NONE);
@@ -275,12 +279,14 @@ int32_t EnvironmentTelemetryModule::runOnce()
 
     if (!(moduleConfig.telemetry.environment_measurement_enabled || moduleConfig.telemetry.environment_screen_enabled ||
           ENVIRONMENTAL_TELEMETRY_MODULE_ENABLE)) {
-        // If this module is not enabled, and the user doesn't want the display screen don't waste any OSThread time on it
+        // If this module is not enabled, and the user doesn't want the display
+        // screen don't waste any OSThread time on it
         return disable();
     }
 
     if (firstTime) {
-        // This is the first time the OSThread library has called this function, so do some setup
+        // This is the first time the OSThread library has called this function, so
+        // do some setup
         firstTime = 0;
 
         if (moduleConfig.telemetry.environment_measurement_enabled || ENVIRONMENTAL_TELEMETRY_MODULE_ENABLE) {
@@ -301,18 +307,20 @@ int32_t EnvironmentTelemetryModule::runOnce()
                 result = ina3221Sensor.runOnce();
             if (max17048Sensor.hasSensor())
                 result = max17048Sensor.runOnce();
-                // this only works on the wismesh hub with the solar option. This is not an I2C sensor, so we don't need the
-                // sensormap here.
+                // this only works on the wismesh hub with the solar option. This is not
+                // an I2C sensor, so we don't need the sensormap here.
 #ifdef HAS_RAKPROT
             result = rak9154Sensor.runOnce();
 #endif
 #endif
         }
-        // it's possible to have this module enabled, only for displaying values on the screen.
-        // therefore, we should only enable the sensor loop if measurement is also enabled
+        // it's possible to have this module enabled, only for displaying values on
+        // the screen. therefore, we should only enable the sensor loop if
+        // measurement is also enabled
         return result == UINT32_MAX ? disable() : setStartDelay();
     } else {
-        // if we somehow got to a second run of this module with measurement disabled, then just wait forever
+        // if we somehow got to a second run of this module with measurement
+        // disabled, then just wait forever
         if (!moduleConfig.telemetry.environment_measurement_enabled && !ENVIRONMENTAL_TELEMETRY_MODULE_ENABLE) {
             return disable();
         }
@@ -392,7 +400,8 @@ void EnvironmentTelemetryModule::drawFrame(OLEDDisplay *display, OLEDDisplayUiSt
         return;
     }
 
-    // === First line: Show sender name + time since received (left), and first metric (right) ===
+    // === First line: Show sender name + time since received (left), and first
+    // metric (right) ===
     const char *sender = getSenderShortName(*lastMeasurementPacket);
     uint32_t agoSecs = service->GetTimeSinceMeshPacket(lastMeasurementPacket);
     String agoStr = (agoSecs > 864000) ? "?"
@@ -507,18 +516,21 @@ bool EnvironmentTelemetryModule::handleReceivedProtobuf(const meshtastic_MeshPac
 #if defined(DEBUG_PORT) && !defined(DEBUG_MUTE)
         const char *sender = getSenderShortName(mp);
 
-        LOG_INFO("(Received from %s): barometric_pressure=%f, current=%f, gas_resistance=%f, relative_humidity=%f, "
+        LOG_INFO("(Received from %s): barometric_pressure=%f, current=%f, "
+                 "gas_resistance=%f, relative_humidity=%f, "
                  "temperature=%f",
                  sender, t->variant.environment_metrics.barometric_pressure, t->variant.environment_metrics.current,
                  t->variant.environment_metrics.gas_resistance, t->variant.environment_metrics.relative_humidity,
                  t->variant.environment_metrics.temperature);
-        LOG_INFO("(Received from %s): voltage=%f, IAQ=%d, distance=%f, lux=%f, white_lux=%f", sender,
-                 t->variant.environment_metrics.voltage, t->variant.environment_metrics.iaq,
+        LOG_INFO("(Received from %s): voltage=%f, IAQ=%d, distance=%f, lux=%f, "
+                 "white_lux=%f",
+                 sender, t->variant.environment_metrics.voltage, t->variant.environment_metrics.iaq,
                  t->variant.environment_metrics.distance, t->variant.environment_metrics.lux,
                  t->variant.environment_metrics.white_lux);
 
-        LOG_INFO("(Received from %s): wind speed=%fm/s, direction=%d degrees, weight=%fkg", sender,
-                 t->variant.environment_metrics.wind_speed, t->variant.environment_metrics.wind_direction,
+        LOG_INFO("(Received from %s): wind speed=%fm/s, direction=%d degrees, "
+                 "weight=%fkg",
+                 sender, t->variant.environment_metrics.wind_speed, t->variant.environment_metrics.wind_direction,
                  t->variant.environment_metrics.weight);
 
         LOG_INFO("(Received from %s): radiation=%fµR/h", sender, t->variant.environment_metrics.radiation);
@@ -616,7 +628,8 @@ bool EnvironmentTelemetryModule::sendTelemetry(NodeNum dest, bool phoneOnly)
     m.time = getTime();
 
     if (getEnvironmentTelemetry(&m)) {
-        LOG_INFO("Send: barometric_pressure=%f, current=%f, gas_resistance=%f, relative_humidity=%f, temperature=%f",
+        LOG_INFO("Send: barometric_pressure=%f, current=%f, gas_resistance=%f, "
+                 "relative_humidity=%f, temperature=%f",
                  m.variant.environment_metrics.barometric_pressure, m.variant.environment_metrics.current,
                  m.variant.environment_metrics.gas_resistance, m.variant.environment_metrics.relative_humidity,
                  m.variant.environment_metrics.temperature);
