@@ -149,6 +149,10 @@ extern void drawCommonHeader(OLEDDisplay *display, int16_t x, int16_t y, const c
 #include "graphics/ScreenFonts.h"
 #include <Throttle.h>
 
+#ifdef MOIRE_MOISTURE_SENSOR
+#include "Sensor/MOIREMOISTURE.h"
+#endif
+
 void EnvironmentTelemetryModule::i2cScanFinished(ScanI2C *i2cScanner)
 {
     if (!moduleConfig.telemetry.environment_measurement_enabled && !ENVIRONMENTAL_TELEMETRY_MODULE_ENABLE) {
@@ -161,7 +165,7 @@ void EnvironmentTelemetryModule::i2cScanFinished(ScanI2C *i2cScanner)
 #if !MESHTASTIC_EXCLUDE_ENVIRONMENTAL_SENSOR
 #ifdef MOIRE_MOISTURE_SENSOR
     // Not a real I2C device
-    addSensor<MOIREMOISTURE>(i2cScanner, ScanI2C::DeviceType::NONE);
+    addSensor<MOIREMOISTURESensor>(i2cScanner, ScanI2C::DeviceType::NONE);
 #endif
 #ifdef T1000X_SENSOR_EN
     // Not a real I2C device

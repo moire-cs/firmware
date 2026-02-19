@@ -1,12 +1,11 @@
 #include "configuration.h"
-#define MOIRE_MOISTURE_PIN 33
 
-#if !MESHTASTIC_EXCLUDE_ENVIRONMENTAL_SENSOR && __has_include(<nrf52_pcnt.h>)
+#if !MESHTASTIC_EXCLUDE_ENVIRONMENTAL_SENSOR && MOIRE_MOISTURE_SENSOR
 
+#include "../../../pcnt/nrf52_pcnt.h"
 #include "../mesh/generated/meshtastic/telemetry.pb.h"
 #include "MOIREMOISTURE.h"
 #include "TelemetrySensor.h"
-#include <../../../pcnt/nrf52_pcnt.h>
 
 MOIREMOISTURESensor::MOIREMOISTURESensor() : TelemetrySensor(meshtastic_TelemetrySensorType_SENSOR_UNSET, "MOIREMOISTURE") {}
 

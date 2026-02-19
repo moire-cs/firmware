@@ -2,11 +2,11 @@
 #pragma once
 #include "configuration.h"
 
-#if !MESHTASTIC_EXCLUDE_ENVIRONMENTAL_SENSOR && __has_include(<nrf52_pcnt.h>)
+#if !MESHTASTIC_EXCLUDE_ENVIRONMENTAL_SENSOR && MOIRE_MOISTURE_SENSOR
 
+#include "../../../pcnt/nrf52_pcnt.h"
 #include "../mesh/generated/meshtastic/telemetry.pb.h"
 #include "TelemetrySensor.h"
-#include <../../../pcnt/nrf52_pcnt.h>
 
 class MOIREMOISTURESensor : public TelemetrySensor
 {
