@@ -20,14 +20,17 @@ bool MOIREMOISTURESensor::initDevice(TwoWire *bus, ScanI2C::FoundDevice *dev)
 
 bool MOIREMOISTURESensor::getMetrics(meshtastic_Telemetry *measurement)
 {
-    measurement->variant.environment_metrics.has_soil_moisture = true;
     uint32_t pulseCount;
-    pcntClear();
-    pulseCount = pcntGetCount();
-    // Convert pulses to moisture level
-    uint8_t moistureLevel = 25;
 
-    measurement->variant.environment_metrics.soil_moisture = moistureLevel;
+    pcntClear();
+    delay(500);
+    pulseCount = pcntGetCount();
+
+    // We use soil temperature to transmit pulseCount since soil moisture is an 8
+    // bit unsigned
+
+    measurement->variant.environment_metrics.has_soil_temperature = true;
+    measurement->variant.environment_metrics.soil_temperature = pulseCount;
 
     return true;
 }
