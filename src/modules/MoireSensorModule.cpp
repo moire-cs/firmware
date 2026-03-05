@@ -140,7 +140,11 @@ void MoireSensorModule::triggerReading()
 int32_t MoireSensorModule::runOnce()
 {
     if (state == ReadState::COUNTING) {
+#ifdef MOIRE_MOISTURE_SENSOR
         uint32_t pulseCount = pcntGetCount();
+#else
+        uint32_t pulseCount = 0;
+#endif
         LOG_DEBUG("MoireSensor: pulseCount=%u", pulseCount);
         state = ReadState::IDLE;
         sendSensorData(cachedTemp, cachedHumidity, cachedLux, (float)pulseCount);
