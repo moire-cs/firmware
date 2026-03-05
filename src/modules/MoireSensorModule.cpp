@@ -150,8 +150,9 @@ int32_t MoireSensorModule::runOnce()
         sendSensorData(cachedTemp, cachedHumidity, cachedLux, (float)pulseCount);
     }
 
-    // Disable the thread until the next triggerReading() call.
-    return disable();
+    // Park the thread until the next triggerReading() call.
+    // Using INT32_MAX (not disable()) so setIntervalFromNow(500) can reschedule it.
+    return INT32_MAX;
 }
 
 // ---------------------------------------------------------------------------
