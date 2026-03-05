@@ -9,10 +9,11 @@
 // How often the gateway broadcasts a wakeup signal.
 // Change this value to experiment with different duty cycles.
 // NOTE: set to 30s for testing, change to (30 * 60 * 1000UL) for deployment
-#define MOIRE_WAKEUP_INTERVAL_MS (30 * 1000UL)
+#define MOIRE_WAKEUP_INTERVAL_MS (30 * 60 * 1000UL)
 
 // Private portnum for wakeup packets.
-// 256–511 is the reserved private application range — no proto registration needed.
+// 256–511 is the reserved private application range — no proto registration
+// needed.
 #define MOIRE_WAKEUP_PORTNUM ((meshtastic_PortNum)256)
 
 /**
@@ -24,21 +25,22 @@
  *
  * Sensor node role:
  *   Receives the wakeup packet, triggers MoireSensorModule::triggerReading(),
- *   then returns CONTINUE so FloodingRouter rebroadcasts to the rest of the mesh.
+ *   then returns CONTINUE so FloodingRouter rebroadcasts to the rest of the
+ * mesh.
  */
-class MoireWakeupModule : public MeshModule, private concurrency::OSThread
-{
-  public:
-    MoireWakeupModule();
+class MoireWakeupModule : public MeshModule, private concurrency::OSThread {
+public:
+  MoireWakeupModule();
 
-  protected:
-    virtual bool wantPacket(const meshtastic_MeshPacket *p) override;
-    virtual ProcessMessage handleReceived(const meshtastic_MeshPacket &mp) override;
-    virtual int32_t runOnce() override;
+protected:
+  virtual bool wantPacket(const meshtastic_MeshPacket *p) override;
+  virtual ProcessMessage
+  handleReceived(const meshtastic_MeshPacket &mp) override;
+  virtual int32_t runOnce() override;
 
-  private:
-    uint32_t seqNum = 0;
-    void sendWakeup();
+private:
+  uint32_t seqNum = 0;
+  void sendWakeup();
 };
 
 extern MoireWakeupModule *moireWakeupModule;
