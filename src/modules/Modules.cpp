@@ -100,6 +100,12 @@
 #if defined(HAS_HARDWARE_WATCHDOG)
 #include "watchdog/watchdogThread.h"
 #endif
+#if defined(MOIRE_GATEWAY) || defined(MOIRE_MOISTURE_SENSOR)
+#include "modules/MoireSensorModule.h"
+#include "modules/MoireWakeupModule.h"
+MoireWakeupModule *moireWakeupModule;
+MoireSensorModule *moireSensorModule;
+#endif
 /**
  * Create module instances here.  If you are adding a new module, you must 'new' it here (or somewhere else)
  */
@@ -244,6 +250,10 @@ void setupModules()
 #endif
 #if defined(HAS_HARDWARE_WATCHDOG)
     watchdogThread = new WatchdogThread();
+#endif
+#if defined(MOIRE_GATEWAY) || defined(MOIRE_MOISTURE_SENSOR)
+    moireWakeupModule = new MoireWakeupModule();
+    moireSensorModule = new MoireSensorModule();
 #endif
     // NOTE! This module must be added LAST because it likes to check for replies from other modules and avoid sending extra
     // acks
