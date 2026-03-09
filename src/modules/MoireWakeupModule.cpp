@@ -70,10 +70,8 @@ ProcessMessage MoireWakeupModule::handleReceived(const meshtastic_MeshPacket &mp
         return ProcessMessage::CONTINUE;
     }
 
-    uint32_t seq = (uint32_t)mp.decoded.payload.bytes[0] |
-                   ((uint32_t)mp.decoded.payload.bytes[1] << 8) |
-                   ((uint32_t)mp.decoded.payload.bytes[2] << 16) |
-                   ((uint32_t)mp.decoded.payload.bytes[3] << 24);
+    uint32_t seq = (uint32_t)mp.decoded.payload.bytes[0] | ((uint32_t)mp.decoded.payload.bytes[1] << 8) |
+                   ((uint32_t)mp.decoded.payload.bytes[2] << 16) | ((uint32_t)mp.decoded.payload.bytes[3] << 24);
 
     LOG_INFO("MoireWakeup: received from 0x%08x seq=%u — triggering sensor read", mp.from, seq);
 

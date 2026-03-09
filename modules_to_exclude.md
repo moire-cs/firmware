@@ -30,34 +30,34 @@ build_flags = ${nrf52840_base.build_flags}
 
 ## Exclusions Ranked by Impact
 
-| Module | Reason | Impact |
-|---|---|---|
-| `EXCLUDE_GPS` | T114 has an L76K GPS polled periodically — biggest single win for a static sensor node | **High** |
-| `EXCLUDE_NEIGHBORINFO` | Periodically broadcasts neighbor packets — radio TX is expensive | **High** |
-| `EXCLUDE_EXTERNALNOTIFICATION` | Has a polling `runOnce` thread | Medium |
-| `EXCLUDE_TRACEROUTE` | Responds to trace packets, minor CPU wake overhead | Medium |
-| `EXCLUDE_DETECTIONSENSOR` | Has its own polling thread; `MoireSensorModule` replaces this role | Medium |
-| `EXCLUDE_ATAK` | Not needed on a sensor node | Low |
-| `EXCLUDE_CANNEDMESSAGES` | UI feature, not needed | Low |
-| `EXCLUDE_REPLYBOT` | Not needed | Low |
-| `EXCLUDE_WAYPOINT` | Not needed | Low |
-| `EXCLUDE_REMOTEHARDWARE` | Not needed | Low |
-| `EXCLUDE_RANGETEST` | Testing only | Low |
-| `EXCLUDE_SERIAL` | Not needed if not using the serial data module | Low |
-| `EXCLUDE_PKI` | Saves RAM/flash; only exclude if not using encrypted channels | Low |
-| `EXCLUDE_POWERSTRESS` | Testing-only module | Trivial |
-| `EXCLUDE_DROPZONE` | Not needed | Trivial |
-| `EXCLUDE_STATUS` | Not needed | Trivial |
+| Module                         | Reason                                                                                 | Impact   |
+| ------------------------------ | -------------------------------------------------------------------------------------- | -------- |
+| `EXCLUDE_GPS`                  | T114 has an L76K GPS polled periodically — biggest single win for a static sensor node | **High** |
+| `EXCLUDE_NEIGHBORINFO`         | Periodically broadcasts neighbor packets — radio TX is expensive                       | **High** |
+| `EXCLUDE_EXTERNALNOTIFICATION` | Has a polling `runOnce` thread                                                         | Medium   |
+| `EXCLUDE_TRACEROUTE`           | Responds to trace packets, minor CPU wake overhead                                     | Medium   |
+| `EXCLUDE_DETECTIONSENSOR`      | Has its own polling thread; `MoireSensorModule` replaces this role                     | Medium   |
+| `EXCLUDE_ATAK`                 | Not needed on a sensor node                                                            | Low      |
+| `EXCLUDE_CANNEDMESSAGES`       | UI feature, not needed                                                                 | Low      |
+| `EXCLUDE_REPLYBOT`             | Not needed                                                                             | Low      |
+| `EXCLUDE_WAYPOINT`             | Not needed                                                                             | Low      |
+| `EXCLUDE_REMOTEHARDWARE`       | Not needed                                                                             | Low      |
+| `EXCLUDE_RANGETEST`            | Testing only                                                                           | Low      |
+| `EXCLUDE_SERIAL`               | Not needed if not using the serial data module                                         | Low      |
+| `EXCLUDE_PKI`                  | Saves RAM/flash; only exclude if not using encrypted channels                          | Low      |
+| `EXCLUDE_POWERSTRESS`          | Testing-only module                                                                    | Trivial  |
+| `EXCLUDE_DROPZONE`             | Not needed                                                                             | Trivial  |
+| `EXCLUDE_STATUS`               | Not needed                                                                             | Trivial  |
 
 ## Modules to Keep
 
-| Module | Reason |
-|---|---|
-| `ADMIN` | Required for over-mesh reconfiguration |
-| `NODEINFO` | Required for mesh participation |
-| `TEXTMESSAGE` | Core mesh packet handling |
-| `ENVIRONMENTAL_SENSOR` / `HAS_TELEMETRY` | Sensor data pipeline |
-| `GENERIC_THREAD_MODULE` | May be required by `MoireWakeupModule` |
+| Module                                   | Reason                                 |
+| ---------------------------------------- | -------------------------------------- |
+| `ADMIN`                                  | Required for over-mesh reconfiguration |
+| `NODEINFO`                               | Required for mesh participation        |
+| `TEXTMESSAGE`                            | Core mesh packet handling              |
+| `ENVIRONMENTAL_SENSOR` / `HAS_TELEMETRY` | Sensor data pipeline                   |
+| `GENERIC_THREAD_MODULE`                  | May be required by `MoireWakeupModule` |
 
 ## Note on GPS Hardware
 

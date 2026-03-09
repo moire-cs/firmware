@@ -41,6 +41,7 @@ All features are implemented as **modules** inheriting from `MeshModule` or `Pro
 ### Hardware Variants
 
 Each variant lives under `variants/<arch>/<name>/` and contains:
+
 - `variant.h` — pin definitions and capability flags (`HAS_GPS`, `USE_SX1262`, etc.)
 - `platformio.ini` — build config, usually `extends` a common base env
 

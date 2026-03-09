@@ -64,10 +64,10 @@ MOIRE,<node_id_hex>,<temp_C>,<humidity_pct>,<lux>,<pulse_count>
 
 ## Failure diagnosis
 
-| Symptom | Likely cause |
-|---|---|
-| No `HDC1080 initialised` or `OPT3001 initialised` | I2C wiring issue or address mismatch — check daughter board connection |
-| `moisture pulse counter init failed` | Wrong pin or pcnt already claimed — check `MOIRE_MOISTURE_PIN` in `variant.h` |
-| Sensor node never logs wakeup received | Devices on different LoRa channels — verify both use the same channel config |
-| Gateway never logs `received from` | Packet not reaching gateway — move devices closer together |
-| `lux=0.00` while other values are valid | OPT3001 config write failed silently after init succeeded |
+| Symptom                                           | Likely cause                                                                  |
+| ------------------------------------------------- | ----------------------------------------------------------------------------- |
+| No `HDC1080 initialised` or `OPT3001 initialised` | I2C wiring issue or address mismatch — check daughter board connection        |
+| `moisture pulse counter init failed`              | Wrong pin or pcnt already claimed — check `MOIRE_MOISTURE_PIN` in `variant.h` |
+| Sensor node never logs wakeup received            | Devices on different LoRa channels — verify both use the same channel config  |
+| Gateway never logs `received from`                | Packet not reaching gateway — move devices closer together                    |
+| `lux=0.00` while other values are valid           | OPT3001 config write failed silently after init succeeded                     |
