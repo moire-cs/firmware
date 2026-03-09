@@ -82,6 +82,11 @@ void MoireSensorModule::i2cScanFinished(ScanI2C *i2cScanner)
 #endif
 
 #endif // !MOIRE_GATEWAY
+    if (config.lora.region == meshtastic_Config_LoRaConfig_RegionCode_UNSET) {
+        LOG_WARN("LoRa Region unset, Moire defaulting to US, please ensure you are "
+                 "complying with local regulations");
+        config.lora.region = meshtastic_Config_LoRaConfig_RegionCode_US;
+    }
 }
 
 // ---------------------------------------------------------------------------
