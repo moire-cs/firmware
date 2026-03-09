@@ -2,6 +2,7 @@
 
 #if defined(MOIRE_GATEWAY) || defined(MOIRE_MOISTURE_SENSOR)
 
+#include "../PowerStatus.h"
 #include "MeshService.h"
 #include "MoireSensorModule.h"
 #include "NodeDB.h"
@@ -9,9 +10,9 @@
 #include <Arduino.h>
 #include <string.h>
 
-// I2C sensor libraries — guarded so they compile only when the library is present.
-// Both HDC1080 and OPT3001 come from the same ClosedCube package, so checking for
-// either header is sufficient.
+// I2C sensor libraries — guarded so they compile only when the library is
+// present. Both HDC1080 and OPT3001 come from the same ClosedCube package, so
+// checking for either header is sufficient.
 #if __has_include(<ClosedCube_HDC1080.h>)
 #include <ClosedCube_HDC1080.h>
 #define MOIRE_HAS_HDC1080
@@ -28,8 +29,7 @@ static ClosedCube_OPT3001 opt3001;
 #include "pcnt/nrf52_pcnt.h"
 #endif
 
-MoireSensorModule::MoireSensorModule()
-    : MeshModule("MoireSensor"), concurrency::OSThread("MoireSensor"), ScanI2CConsumer()
+MoireSensorModule::MoireSensorModule() : MeshModule("MoireSensor"), concurrency::OSThread("MoireSensor"), ScanI2CConsumer()
 {
     // The thread is disabled on construction.
     // It is only re-enabled by triggerReading() → setIntervalFromNow(500).
@@ -100,6 +100,8 @@ void MoireSensorModule::triggerReading()
     }
 
     LOG_INFO("MoireSensor: starting sensor read");
+    cachedBatteryPercentage = powerStatus->getBatteryChargePercent();
+    LOG_DEBUG("MoireSensor: BatteryPercentage=%d%%", cachedBatteryPercentage);
 
     // Read temperature and humidity (fast I2C reads, done synchronously)
 #ifdef MOIRE_HAS_HDC1080
@@ -129,7 +131,7 @@ void MoireSensorModule::triggerReading()
     setIntervalFromNow(500);
 #else
     // No moisture sensor on this build — send immediately with pulseCount = 0
-    sendSensorData(cachedTemp, cachedHumidity, cachedLux, 0.0f);
+    sendSensorData(cachedTemp, cachedHumidity, cachedLux, 0.0f, cachedBatteryPercentage);
 #endif
 }
 
@@ -147,11 +149,12 @@ int32_t MoireSensorModule::runOnce()
 #endif
         LOG_DEBUG("MoireSensor: pulseCount=%u", pulseCount);
         state = ReadState::IDLE;
-        sendSensorData(cachedTemp, cachedHumidity, cachedLux, (float)pulseCount);
+        sendSensorData(cachedTemp, cachedHumidity, cachedLux, (float)pulseCount, cachedBatteryPercentage);
     }
 
     // Park the thread until the next triggerReading() call.
-    // Using INT32_MAX (not disable()) so setIntervalFromNow(500) can reschedule it.
+    // Using INT32_MAX (not disable()) so setIntervalFromNow(500) can reschedule
+    // it.
     return INT32_MAX;
 }
 
@@ -159,7 +162,7 @@ int32_t MoireSensorModule::runOnce()
 // Packet construction and transmission
 // ---------------------------------------------------------------------------
 
-void MoireSensorModule::sendSensorData(float temp, float humidity, float lux, float pulseCount)
+void MoireSensorModule::sendSensorData(float temp, float humidity, float lux, float pulseCount, uint8_t batteryPercentage)
 {
     MoireSensorPayload payload = {};
     payload.nodeId = nodeDB->getNodeNum();
@@ -167,6 +170,7 @@ void MoireSensorModule::sendSensorData(float temp, float humidity, float lux, fl
     payload.humidity = humidity;
     payload.lux = lux;
     payload.pulseCount = pulseCount;
+    payload.batteryPercentage = batteryPercentage;
 
     meshtastic_MeshPacket *p = router->allocForSending();
     p->decoded.portnum = MOIRE_SENSOR_PORTNUM;
@@ -176,8 +180,9 @@ void MoireSensorModule::sendSensorData(float temp, float humidity, float lux, fl
     p->decoded.want_response = false;
     p->priority = meshtastic_MeshPacket_Priority_RELIABLE;
 
-    LOG_INFO("MoireSensor: sending — node=0x%08x  temp=%.2f°C  hum=%.2f%%  lux=%.2f  pulse=%.0f",
-             payload.nodeId, temp, humidity, lux, pulseCount);
+    LOG_INFO("MoireSensor: sending — node=0x%08x  temp=%.2f°C  hum=%.2f%%  "
+             "lux=%.2f  pulse=%.0f  bat=%d%%",
+             payload.nodeId, temp, humidity, lux, pulseCount, batteryPercentage);
 
     service->sendToMesh(p, RX_SRC_LOCAL, true);
 }
@@ -194,25 +199,28 @@ bool MoireSensorModule::wantPacket(const meshtastic_MeshPacket *p)
 ProcessMessage MoireSensorModule::handleReceived(const meshtastic_MeshPacket &mp)
 {
     if (mp.decoded.payload.size < sizeof(MoireSensorPayload)) {
-        LOG_WARN("MoireSensor: malformed packet from 0x%08x (size=%u, expected=%u)",
-                 mp.from, mp.decoded.payload.size, sizeof(MoireSensorPayload));
+        LOG_WARN("MoireSensor: malformed packet from 0x%08x (size=%u, expected=%u)", mp.from, mp.decoded.payload.size,
+                 sizeof(MoireSensorPayload));
         return ProcessMessage::CONTINUE;
     }
 
     MoireSensorPayload payload;
     memcpy(&payload, mp.decoded.payload.bytes, sizeof(payload));
 
-    LOG_INFO("MoireSensor: received from 0x%08x — temp=%.2f°C  hum=%.2f%%  lux=%.2f  pulse=%.0f",
-             payload.nodeId, payload.temperature, payload.humidity, payload.lux, payload.pulseCount);
+    LOG_INFO("MoireSensor: received from 0x%08x — temp=%.2f°C  hum=%.2f%%  "
+             "lux=%.2f  pulse=%.0f  bat=%d%%",
+             payload.nodeId, payload.temperature, payload.humidity, payload.lux, payload.pulseCount, payload.batteryPercentage);
 
 #ifdef MOIRE_GATEWAY
     // Write a CSV line to USB serial so a connected computer can read the data.
-    // Format: MOIRE,<node_id_hex>,<temp_C>,<humidity_pct>,<lux>,<pulse_count>
-    Serial.printf("MOIRE,%08X,%.2f,%.2f,%.2f,%.0f\r\n",
-                  payload.nodeId, payload.temperature, payload.humidity, payload.lux, payload.pulseCount);
+    // Format:
+    // MOIRE,<node_id_hex>,<temp_C>,<humidity_pct>,<lux>,<pulse_count>,<battery_pct>
+    Serial.printf("MOIRE,%08X,%.2f,%.2f,%.2f,%.0f,%d\r\n", payload.nodeId, payload.temperature, payload.humidity, payload.lux,
+                  payload.pulseCount, payload.batteryPercentage);
 #endif
 
-    // CONTINUE lets FloodingRouter relay this packet toward the gateway (or beyond).
+    // CONTINUE lets FloodingRouter relay this packet toward the gateway (or
+    // beyond).
     return ProcessMessage::CONTINUE;
 }
 

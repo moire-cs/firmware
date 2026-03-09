@@ -9,14 +9,17 @@
 #include "mesh/generated/meshtastic/portnums.pb.h"
 
 // Private portnum for sensor data packets.
-// 256–511 is the reserved private application range — no proto registration needed.
+// 256–511 is the reserved private application range — no proto registration
+// needed.
 #define MOIRE_SENSOR_PORTNUM ((meshtastic_PortNum)257)
 
 /**
  * Payload broadcast by a sensor node after wakeup.
- * Packed to guarantee a fixed 20-byte on-air size regardless of platform alignment.
+ * Packed to guarantee a fixed 20-byte on-air size regardless of platform
+ * alignment.
  *
  * Field mapping:
+ *   batteryPercentage - Battery percentage from PowerStatus Module
  *   temperature  — HDC1080 (°C)
  *   humidity     — HDC1080 (%RH)
  *   lux          — OPT3001 (lux)
@@ -29,6 +32,7 @@ struct __attribute__((packed)) MoireSensorPayload {
     float humidity;
     float lux;
     float pulseCount;
+    uint8_t batteryPercentage;
 };
 
 /**
@@ -36,17 +40,19 @@ struct __attribute__((packed)) MoireSensorPayload {
  *
  * Sensor node role:
  *   Activated by MoireWakeupModule::triggerReading().
- *   Reads HDC1080 (temp/humidity) and OPT3001 (lux) synchronously, then starts the
- *   moisture pulse counter. 500 ms later (via runOnce) the pulse count is captured and
- *   all four values are packed into a MoireSensorPayload and broadcast to the mesh.
+ *   Reads HDC1080 (temp/humidity) and OPT3001 (lux) synchronously, then starts
+ * the moisture pulse counter. 500 ms later (via runOnce) the pulse count is
+ * captured and all four values are packed into a MoireSensorPayload and
+ * broadcast to the mesh.
  *
  * Gateway role:
  *   Receives MoireSensorPayload packets from sensor nodes.
- *   Logs the values and writes a CSV line to USB serial for the connected computer:
- *     MOIRE,<NODE_ID_HEX>,<temp_C>,<humidity_pct>,<lux>,<pulse_count>
+ *   Logs the values and writes a CSV line to USB serial for the connected
+ * computer: MOIRE,<NODE_ID_HEX>,<temp_C>,<humidity_pct>,<lux>,<pulse_count>
  *
  * All nodes (sensor and gateway):
- *   Returns ProcessMessage::CONTINUE so FloodingRouter relays packets through the mesh.
+ *   Returns ProcessMessage::CONTINUE so FloodingRouter relays packets through
+ * the mesh.
  */
 class MoireSensorModule : public MeshModule, private concurrency::OSThread, public ScanI2CConsumer
 {
@@ -71,7 +77,8 @@ class MoireSensorModule : public MeshModule, private concurrency::OSThread, publ
   private:
     // Two-state machine:
     //   IDLE     — waiting for a triggerReading() call
-    //   COUNTING — moisture pulse counter is running; runOnce fires in 500 ms to capture it
+    //   COUNTING — moisture pulse counter is running; runOnce fires in 500 ms to
+    //   capture it
     enum class ReadState { IDLE, COUNTING };
     ReadState state = ReadState::IDLE;
 
@@ -79,10 +86,11 @@ class MoireSensorModule : public MeshModule, private concurrency::OSThread, publ
     float cachedTemp = 0.0f;
     float cachedHumidity = 0.0f;
     float cachedLux = 0.0f;
+    uint8_t cachedBatteryPercentage = 0;
 
     bool sensorsReady = false;
 
-    void sendSensorData(float temp, float humidity, float lux, float pulseCount);
+    void sendSensorData(float temp, float humidity, float lux, float pulseCount, uint8_t batteryPercentage);
 };
 
 extern MoireSensorModule *moireSensorModule;
