@@ -7,6 +7,7 @@
 #include "MoireSensorModule.h"
 #include "NodeDB.h"
 #include "Router.h"
+#include "sleep.h"
 #include <Arduino.h>
 #include <string.h>
 
@@ -81,6 +82,9 @@ void MoireSensorModule::i2cScanFinished(ScanI2C *i2cScanner)
     }
 #endif
 
+    config.device.role = meshtastic_Config_DeviceConfig_Role_SENSOR;
+    config.power.is_power_saving = true;
+
 #endif // !MOIRE_GATEWAY
 
     // We set our default setttings for the Moire Devices after I2C is completed
@@ -99,7 +103,7 @@ void MoireSensorModule::i2cScanFinished(ScanI2C *i2cScanner)
 // Sensor reading — called from MoireWakeupModule::handleReceived()
 // ---------------------------------------------------------------------------
 
-void MoireSensorModule::triggerReading()
+void MoireSensorModule::triggerReading(uint32_t sleepTimeMs)
 {
     if (state != ReadState::IDLE) {
         LOG_DEBUG("MoireSensor: read already in progress, ignoring trigger");
@@ -109,6 +113,9 @@ void MoireSensorModule::triggerReading()
         LOG_WARN("MoireSensor: sensors not ready, skipping read");
         return;
     }
+
+    cachedSleepTimeMs = sleepTimeMs;
+    LOG_INFO("Recieved Sleep Time: %d ms", cachedSleepTimeMs);
 
     LOG_INFO("MoireSensor: starting sensor read");
     cachedBatteryPercentage = powerStatus->getBatteryChargePercent();
@@ -148,6 +155,8 @@ void MoireSensorModule::triggerReading()
 
 // ---------------------------------------------------------------------------
 // OSThread — fires 500 ms after triggerReading() to capture the pulse count
+//            fires 2000 ms after capturing pulse count and sending to mesh to
+//            go to sleep
 // ---------------------------------------------------------------------------
 
 int32_t MoireSensorModule::runOnce()
@@ -159,8 +168,23 @@ int32_t MoireSensorModule::runOnce()
         uint32_t pulseCount = 0;
 #endif
         LOG_DEBUG("MoireSensor: pulseCount=%u", pulseCount);
-        state = ReadState::IDLE;
+
+        // We set the state to sending, send the mesh packet to the queue, then
+        // schedule runOnce() to be called again in two seconds, where the sleep
+        // route is then taken
+        state = ReadState::SENDING;
         sendSensorData(cachedTemp, cachedHumidity, cachedLux, (float)pulseCount, cachedBatteryPercentage);
+
+        // We wait 10 seconds before running this thread agian in sending mode so
+        // that radio has time to send sensor reading We will skipPreflight in
+        // doDeepSleep, so we need to make sure we wait long enough
+        return 10000;
+    }
+
+    else if (state == ReadState::SENDING) {
+        state = ReadState::IDLE;
+        LOG_INFO("Done sending: going to sleep for %u ms", cachedSleepTimeMs);
+        doDeepSleep(cachedSleepTimeMs, true, false);
     }
 
     // Park the thread until the next triggerReading() call.

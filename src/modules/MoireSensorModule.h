@@ -64,7 +64,7 @@ class MoireSensorModule : public MeshModule, private concurrency::OSThread, publ
      * Safe to call from inside handleReceived().
      * Silently ignored if a reading is already in progress.
      */
-    void triggerReading();
+    void triggerReading(uint32_t sleepTimeMs);
 
     // Called by the firmware once the I2C bus scan is complete.
     virtual void i2cScanFinished(ScanI2C *i2cScanner) override;
@@ -79,7 +79,11 @@ class MoireSensorModule : public MeshModule, private concurrency::OSThread, publ
     //   IDLE     — waiting for a triggerReading() call
     //   COUNTING — moisture pulse counter is running; runOnce fires in 500 ms to
     //   capture it
-    enum class ReadState { IDLE, COUNTING };
+    //   SENDING - sendToMesh queues message, but it doesn't block while waiting
+    //   for the message to be sent
+    //     We use this state to ensure that enough time has passed for the message
+    //     to be sent before sleeping
+    enum class ReadState { IDLE, COUNTING, SENDING };
     ReadState state = ReadState::IDLE;
 
     // Fast-sensor results cached between the two runOnce() calls
@@ -87,6 +91,7 @@ class MoireSensorModule : public MeshModule, private concurrency::OSThread, publ
     float cachedHumidity = 0.0f;
     float cachedLux = 0.0f;
     uint8_t cachedBatteryPercentage = 0;
+    uint32_t cachedSleepTimeMs = 0;
 
     bool sensorsReady = false;
 

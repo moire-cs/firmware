@@ -9,7 +9,7 @@
 // How often the gateway broadcasts a wakeup signal.
 // Change this value to experiment with different duty cycles.
 // NOTE: set to 30s for testing, change to (30 * 60 * 1000UL) for deployment
-#define MOIRE_WAKEUP_INTERVAL_MS (30 * 1000UL)
+#define MOIRE_WAKEUP_INTERVAL_MS (2 * 60 * 1000UL)
 
 // Private portnum for wakeup packets.
 // 256–511 is the reserved private application range — no proto registration

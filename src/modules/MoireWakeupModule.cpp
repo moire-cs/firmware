@@ -32,7 +32,9 @@ void MoireWakeupModule::sendWakeup()
     LOG_INFO("MoireWakeup: broadcasting wakeup");
 
     MoireWakeupPayload payload = {};
-    payload.sleepTimeMs = 30 * 1000 * 60;
+    // TODO: Wakeup interval should never be low that this would matter, but make
+    // it safe
+    payload.sleepTimeMs = MOIRE_WAKEUP_INTERVAL_MS - (60 * 1000);
     meshtastic_MeshPacket *p = router->allocForSending();
     p->decoded.portnum = MOIRE_WAKEUP_PORTNUM;
 
@@ -73,7 +75,7 @@ ProcessMessage MoireWakeupModule::handleReceived(const meshtastic_MeshPacket &mp
     LOG_INFO("MoireWakeup: received from 0x%08x sleepTime=%d — triggering sensor read", mp.from, payload.sleepTimeMs);
 
     if (moireSensorModule)
-        moireSensorModule->triggerReading();
+        moireSensorModule->triggerReading(payload.sleepTimeMs);
 #endif
 
     // CONTINUE lets FloodingRouter rebroadcast this packet so other nodes also
