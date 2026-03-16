@@ -32,9 +32,10 @@ void MoireWakeupModule::sendWakeup()
     LOG_INFO("MoireWakeup: broadcasting wakeup");
 
     MoireWakeupPayload payload = {};
-    // TODO: Wakeup interval should never be low that this would matter, but make
-    // it safe
-    payload.sleepTimeMs = MOIRE_WAKEUP_INTERVAL_MS - (60 * 1000);
+
+    // We subtract 30 seconds from the wakeup interval to give each device time to
+    // boot up
+    payload.sleepTimeMs = MOIRE_WAKEUP_INTERVAL_MS - (30 * 1000);
     meshtastic_MeshPacket *p = router->allocForSending();
     p->decoded.portnum = MOIRE_WAKEUP_PORTNUM;
 

@@ -7,9 +7,15 @@
 #include "mesh/generated/meshtastic/portnums.pb.h"
 
 // How often the gateway broadcasts a wakeup signal.
-// Change this value to experiment with different duty cycles.
-// NOTE: set to 30s for testing, change to (30 * 60 * 1000UL) for deployment
-#define MOIRE_WAKEUP_INTERVAL_MS (2 * 60 * 1000UL)
+#define MOIRE_WAKEUP_INTERVAL_MINS 30
+#define MOIRE_WAKEUP_INTERVAL_MS (MOIRE_WAKEUP_INTERVAL_MINS * 60 * 1000UL)
+
+// TODO: We might need to make this even greater depending on how long devices
+// need to be on to rebroadcast readings from further out nodes
+#if MOIRE_WAKEUP_INTERVAL_MS < 60000
+#error                                                                                                                           \
+    "Do not set wakeup signal interval below 1 minute, we will always subtract 30 seconds from the sleep time to give the sensor nodes time to wake up"
+#endif
 
 // Private portnum for wakeup packets.
 // 256–511 is the reserved private application range — no proto registration
