@@ -16,17 +16,29 @@
 // needed.
 #define MOIRE_WAKEUP_PORTNUM ((meshtastic_PortNum)256)
 
+/** Payload broadcast by gateway node
+ *
+ * Field mapping:
+ * sleepTimeMs -- The amount of time in milliseconds that the sensor node should
+ * sleep for before recieving the next wakeup signal
+ */
+struct __attribute__((packed)) MoireWakeupPayload {
+    uint32_t sleepTimeMs;
+};
+
 /**
  * MoireWakeupModule
  *
  * Gateway role:
  *   Broadcasts a wakeup packet to the mesh every MOIRE_WAKEUP_INTERVAL_MS.
- *   The 4-byte payload is a monotonically increasing sequence number.
+ *   Packet contains a sleep interval which will tell the sensor device how
+ *   long to sleep before expecting the next packet
  *
  * Sensor node role:
  *   Receives the wakeup packet, triggers MoireSensorModule::triggerReading(),
  *   then returns CONTINUE so FloodingRouter rebroadcasts to the rest of the
- * mesh.
+ * mesh. Once wakeup message rebroadcasted and sensor readings sent, go to sleep
+ * for time specified in wakeup packet
  */
 class MoireWakeupModule : public MeshModule, private concurrency::OSThread
 {
@@ -39,7 +51,6 @@ class MoireWakeupModule : public MeshModule, private concurrency::OSThread
     virtual int32_t runOnce() override;
 
   private:
-    uint32_t seqNum = 0;
     void sendWakeup();
 };
 

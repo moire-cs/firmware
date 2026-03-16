@@ -16,8 +16,8 @@ MoireWakeupModule::MoireWakeupModule() : MeshModule("MoireWakeup"), concurrency:
     setIntervalFromNow(10 * 1000);
 #endif
     // On sensor nodes runOnce() is never scheduled — the thread only wakes when
-    // MoireSensorModule's state machine calls setIntervalFromNow() on its own thread.
-    // Nothing to do here.
+    // MoireSensorModule's state machine calls setIntervalFromNow() on its own
+    // thread. Nothing to do here.
 }
 
 bool MoireWakeupModule::wantPacket(const meshtastic_MeshPacket *p)
@@ -29,24 +29,21 @@ bool MoireWakeupModule::wantPacket(const meshtastic_MeshPacket *p)
 
 void MoireWakeupModule::sendWakeup()
 {
-    LOG_INFO("MoireWakeup: broadcasting wakeup seq=%u", seqNum);
+    LOG_INFO("MoireWakeup: broadcasting wakeup");
 
+    MoireWakeupPayload payload = {};
+    payload.sleepTimeMs = 30 * 1000 * 60;
     meshtastic_MeshPacket *p = router->allocForSending();
     p->decoded.portnum = MOIRE_WAKEUP_PORTNUM;
 
-    // 4-byte little-endian sequence number
-    p->decoded.payload.bytes[0] = seqNum & 0xFF;
-    p->decoded.payload.bytes[1] = (seqNum >> 8) & 0xFF;
-    p->decoded.payload.bytes[2] = (seqNum >> 16) & 0xFF;
-    p->decoded.payload.bytes[3] = (seqNum >> 24) & 0xFF;
-    p->decoded.payload.size = 4;
+    memcpy(p->decoded.payload.bytes, &payload, sizeof(payload));
+    p->decoded.payload.size = sizeof(payload);
 
     p->to = NODENUM_BROADCAST;
     p->decoded.want_response = false;
     p->priority = meshtastic_MeshPacket_Priority_RELIABLE;
 
     service->sendToMesh(p, RX_SRC_LOCAL, true);
-    seqNum++;
 }
 
 int32_t MoireWakeupModule::runOnce()
@@ -65,21 +62,22 @@ int32_t MoireWakeupModule::runOnce()
 ProcessMessage MoireWakeupModule::handleReceived(const meshtastic_MeshPacket &mp)
 {
 #ifndef MOIRE_GATEWAY
-    if (mp.decoded.payload.size < 4) {
+    if (mp.decoded.payload.size < sizeof(MoireWakeupPayload)) {
         LOG_WARN("MoireWakeup: malformed packet from 0x%08x (size=%u)", mp.from, mp.decoded.payload.size);
         return ProcessMessage::CONTINUE;
     }
 
-    uint32_t seq = (uint32_t)mp.decoded.payload.bytes[0] | ((uint32_t)mp.decoded.payload.bytes[1] << 8) |
-                   ((uint32_t)mp.decoded.payload.bytes[2] << 16) | ((uint32_t)mp.decoded.payload.bytes[3] << 24);
+    MoireWakeupPayload payload;
+    memcpy(&payload, mp.decoded.payload.bytes, sizeof(payload));
 
-    LOG_INFO("MoireWakeup: received from 0x%08x seq=%u — triggering sensor read", mp.from, seq);
+    LOG_INFO("MoireWakeup: received from 0x%08x sleepTime=%d — triggering sensor read", mp.from, payload.sleepTimeMs);
 
     if (moireSensorModule)
         moireSensorModule->triggerReading();
 #endif
 
-    // CONTINUE lets FloodingRouter rebroadcast this packet so other nodes also wake up.
+    // CONTINUE lets FloodingRouter rebroadcast this packet so other nodes also
+    // wake up.
     return ProcessMessage::CONTINUE;
 }
 
