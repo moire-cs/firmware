@@ -1,6 +1,6 @@
 #include "configuration.h"
 
-#if defined(MOIRE_GATEWAY) || defined(MOIRE_MOISTURE_SENSOR)
+#if defined(MOIRE_GATEWAY) || defined(MOIRE_MOISTURE_SENSOR) || defined(MOIRE_ROUTER)
 
 #include "MeshService.h"
 #include "MoireSensorModule.h"
@@ -73,10 +73,15 @@ ProcessMessage MoireWakeupModule::handleReceived(const meshtastic_MeshPacket &mp
     MoireWakeupPayload payload;
     memcpy(&payload, mp.decoded.payload.bytes, sizeof(payload));
 
-    LOG_INFO("MoireWakeup: received from 0x%08x sleepTime=%d — triggering sensor read", mp.from, payload.sleepTimeMs);
+#ifdef MOIRE_ROUTER
+    LOG_INFO("MoireWakeup: received from 0x%08x sleepTime=%d", mp.from, payload.sleepTimeMs);
+#endif
 
+#ifdef MOIRE_MOISTURE_SENSOR
+    LOG_INFO("MoireWakeup: received from 0x%08x sleepTime=%d — triggering sensor read", mp.from, payload.sleepTimeMs);
     if (moireSensorModule)
         moireSensorModule->triggerReading(payload.sleepTimeMs);
+#endif
 #endif
 
     // CONTINUE lets FloodingRouter rebroadcast this packet so other nodes also
@@ -84,4 +89,5 @@ ProcessMessage MoireWakeupModule::handleReceived(const meshtastic_MeshPacket &mp
     return ProcessMessage::CONTINUE;
 }
 
-#endif // defined(MOIRE_GATEWAY) || defined(MOIRE_MOISTURE_SENSOR)
+#endif // defined(MOIRE_GATEWAY) || defined(MOIRE_MOISTURE_SENSOR) ||
+       // defined(MOIRE_ROUTER)

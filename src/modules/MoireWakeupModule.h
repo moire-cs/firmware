@@ -1,6 +1,6 @@
 #pragma once
 
-#if defined(MOIRE_GATEWAY) || defined(MOIRE_MOISTURE_SENSOR)
+#if defined(MOIRE_GATEWAY) || defined(MOIRE_MOISTURE_SENSOR) || defined(MOIRE_ROUTER)
 
 #include "MeshModule.h"
 #include "concurrency/OSThread.h"
@@ -62,4 +62,5 @@ class MoireWakeupModule : public MeshModule, private concurrency::OSThread
 
 extern MoireWakeupModule *moireWakeupModule;
 
-#endif // defined(MOIRE_GATEWAY) || defined(MOIRE_MOISTURE_SENSOR)
+#endif // defined(MOIRE_GATEWAY) || defined(MOIRE_MOISTURE_SENSOR) ||
+       // defined(MOIRE_ROUTER)

@@ -100,14 +100,15 @@
 #if defined(HAS_HARDWARE_WATCHDOG)
 #include "watchdog/watchdogThread.h"
 #endif
-#if defined(MOIRE_GATEWAY) || defined(MOIRE_MOISTURE_SENSOR)
+#if defined(MOIRE_GATEWAY) || defined(MOIRE_MOISTURE_SENSOR) || defined(MOIRE_ROUTER)
 #include "modules/MoireSensorModule.h"
 #include "modules/MoireWakeupModule.h"
 MoireWakeupModule *moireWakeupModule;
 MoireSensorModule *moireSensorModule;
 #endif
 /**
- * Create module instances here.  If you are adding a new module, you must 'new' it here (or somewhere else)
+ * Create module instances here.  If you are adding a new module, you must 'new'
+ * it here (or somewhere else)
  */
 void setupModules()
 {
@@ -168,8 +169,8 @@ void setupModules()
 #if !MESHTASTIC_EXCLUDE_GENERIC_THREAD_MODULE
     new GenericThreadModule();
 #endif
-    // Note: if the rest of meshtastic doesn't need to explicitly use your module, you do not need to assign the instance
-    // to a global variable.
+    // Note: if the rest of meshtastic doesn't need to explicitly use your module,
+    // you do not need to assign the instance to a global variable.
 
 #if !MESHTASTIC_EXCLUDE_REMOTEHARDWARE
     new RemoteHardwareModule();
@@ -251,11 +252,11 @@ void setupModules()
 #if defined(HAS_HARDWARE_WATCHDOG)
     watchdogThread = new WatchdogThread();
 #endif
-#if defined(MOIRE_GATEWAY) || defined(MOIRE_MOISTURE_SENSOR)
+#if defined(MOIRE_GATEWAY) || defined(MOIRE_MOISTURE_SENSOR) || defined(MOIRE_ROUTER)
     moireWakeupModule = new MoireWakeupModule();
     moireSensorModule = new MoireSensorModule();
 #endif
-    // NOTE! This module must be added LAST because it likes to check for replies from other modules and avoid sending extra
-    // acks
+    // NOTE! This module must be added LAST because it likes to check for replies
+    // from other modules and avoid sending extra acks
     routingModule = new RoutingModule();
 }

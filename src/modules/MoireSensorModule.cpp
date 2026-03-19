@@ -1,6 +1,6 @@
 #include "configuration.h"
 
-#if defined(MOIRE_GATEWAY) || defined(MOIRE_MOISTURE_SENSOR)
+#if defined(MOIRE_GATEWAY) || defined(MOIRE_MOISTURE_SENSOR) || defined(MOIRE_ROUTER)
 
 #include "../PowerStatus.h"
 #include "MeshService.h"
@@ -42,7 +42,7 @@ MoireSensorModule::MoireSensorModule() : MeshModule("MoireSensor"), concurrency:
 
 void MoireSensorModule::i2cScanFinished(ScanI2C *i2cScanner)
 {
-#ifndef MOIRE_GATEWAY
+#if !defined(MOIRE_GATEWAY) && !defined(MOIRE_ROUTER)
 
 #ifdef MOIRE_HAS_HDC1080
     ScanI2C::FoundDevice hdc1080Dev = i2cScanner->find(ScanI2C::DeviceType::HDC1080);
@@ -85,7 +85,7 @@ void MoireSensorModule::i2cScanFinished(ScanI2C *i2cScanner)
     config.device.role = meshtastic_Config_DeviceConfig_Role_SENSOR;
     config.power.is_power_saving = true;
 
-#endif // !MOIRE_GATEWAY
+#endif // !MOIRE_GATEWAY || !MOIRE_ROUTER
 
     // We set our default setttings for the Moire Devices after I2C is completed
     // to make sure we override any defaults
@@ -254,9 +254,12 @@ ProcessMessage MoireSensorModule::handleReceived(const meshtastic_MeshPacket &mp
                   payload.pulseCount, payload.batteryPercentage);
 #endif
 
-    // CONTINUE lets FloodingRouter relay this packet toward the gateway (or
-    // beyond).
+#ifdef MOIRE_ROUTER
+    LOG_INFO("Moire Router: Rebroadcasting reading from 0x%08x", payload.nodeId);
+#endif
+
     return ProcessMessage::CONTINUE;
 }
 
-#endif // defined(MOIRE_GATEWAY) || defined(MOIRE_MOISTURE_SENSOR)
+#endif // defined(MOIRE_GATEWAY) || defined(MOIRE_MOISTURE_SENSOR) ||
+       // defined(MOIRE_ROUTER)
