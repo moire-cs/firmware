@@ -85,7 +85,7 @@ void MoireSensorModule::i2cScanFinished(ScanI2C *i2cScanner)
     config.device.role = meshtastic_Config_DeviceConfig_Role_SENSOR;
     config.power.is_power_saving = true;
 
-#endif // !MOIRE_GATEWAY || !MOIRE_ROUTER
+#endif // !MOIRE_GATEWAY && !MOIRE_ROUTER
 
     // We set our default setttings for the Moire Devices after I2C is completed
     // to make sure we override any defaults
