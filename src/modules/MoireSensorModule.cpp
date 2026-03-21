@@ -97,6 +97,10 @@ void MoireSensorModule::i2cScanFinished(ScanI2C *i2cScanner)
 
     // Turn off led heartbeat
     config.device.led_heartbeat_disabled = true;
+
+    // Set our maximum hops to 5, we can increase in the field if needed, but
+    // Let's keep i <= 5 in NOLA
+    config.lora.hop_limit = 5;
 }
 
 // ---------------------------------------------------------------------------
