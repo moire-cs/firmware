@@ -252,15 +252,15 @@ ProcessMessage MoireSensorModule::handleReceived(const meshtastic_MeshPacket &mp
              payload.nodeId, payload.temperature, payload.humidity, payload.lux, payload.pulseCount, payload.batteryPercentage);
 
 #ifdef MOIRE_GATEWAY
-    // Write a CSV line to USB serial so a connected computer can read the data.
-    // Format:
-    // MOIRE,<node_id_hex>,<temp_C>,<humidity_pct>,<lux>,<pulse_count>,<battery_pct>
-    Serial.printf("MOIRE,%08X,%.2f,%.2f,%.2f,%.0f,%d\r\n", payload.nodeId, payload.temperature, payload.humidity, payload.lux,
-                  payload.pulseCount, payload.batteryPercentage);
-
+    // If you add a new version, simply use this same format with new sensor IDs
     switch (payload.nodeVersion) {
     case (MOIRE_BOARD_2026):
-        Serial.printf("Node version 1 detected");
+        Serial.printf("Node version 1 detected\r\n");
+        Serial.printf("MESSAGE:{\"nodeId\": \"0x%08x\",\"sensors\": "
+                      "[\"0\",\"1\",\"2\",\"3\",\"4\"],"
+                      "\"messages\": [[%.0f,%.2f,%.2f,%.2f,%d]]}\r\n",
+                      payload.nodeId, payload.pulseCount, payload.temperature, payload.humidity, payload.lux,
+                      payload.batteryPercentage);
         break;
     }
 #endif
