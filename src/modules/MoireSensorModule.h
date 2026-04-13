@@ -13,6 +13,12 @@
 // needed.
 #define MOIRE_SENSOR_PORTNUM ((meshtastic_PortNum)257)
 
+// MOIRE NODE VERSIONS: IF YOU CREATE A NEW VERSION OF THE MOIRE BOARD WITH
+// DIFFERENT SENSORS, ADD A MACRO, DEFINE IT IN THE NEW VARIANT.H as #define
+// MOIRE_VERSION 2, define it here as #define MOIRE_BOARD_X 2 AND ADD NEW
+// PARSING IN MoireSensorModule.c
+#define MOIRE_BOARD_2026 1
+
 /**
  * Payload broadcast by a sensor node after wakeup.
  * Packed to guarantee a fixed 20-byte on-air size regardless of platform
@@ -25,8 +31,11 @@
  *   lux          — OPT3001 (lux)
  *   pulseCount   — Moire moisture sensor (raw pulse count over 500 ms)
  *   nodeId       — Meshtastic node number of the originating sensor node
+ *   nodeVersion  — The version of our moire node, current is 1, be sure to
+ * define per instructions in header file
  */
 struct __attribute__((packed)) MoireSensorPayload {
+    uint8_t nodeVersion;
     uint32_t nodeId;
     float temperature;
     float humidity;

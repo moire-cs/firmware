@@ -35,6 +35,9 @@ extern "C" {
 
 #define HELTEC_MESH_NODE_T114
 
+// 2026 version
+#define MOIRE_VERSION 1
+
 #define USE_ST7789
 
 #define ST7789_NSS 11

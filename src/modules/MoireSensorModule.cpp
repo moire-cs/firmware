@@ -205,6 +205,7 @@ void MoireSensorModule::sendSensorData(float temp, float humidity, float lux, fl
 {
     MoireSensorPayload payload = {};
     payload.nodeId = nodeDB->getNodeNum();
+    payload.nodeVersion = MOIRE_VERSION;
     payload.temperature = temp;
     payload.humidity = humidity;
     payload.lux = lux;
@@ -256,6 +257,12 @@ ProcessMessage MoireSensorModule::handleReceived(const meshtastic_MeshPacket &mp
     // MOIRE,<node_id_hex>,<temp_C>,<humidity_pct>,<lux>,<pulse_count>,<battery_pct>
     Serial.printf("MOIRE,%08X,%.2f,%.2f,%.2f,%.0f,%d\r\n", payload.nodeId, payload.temperature, payload.humidity, payload.lux,
                   payload.pulseCount, payload.batteryPercentage);
+
+    switch (payload.nodeVersion) {
+    case (MOIRE_BOARD_2026):
+        Serial.printf("Node version 1 detected");
+        break;
+    }
 #endif
 
 #ifdef MOIRE_ROUTER
