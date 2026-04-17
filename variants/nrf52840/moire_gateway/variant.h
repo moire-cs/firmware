@@ -95,6 +95,9 @@ No longer populated on PCB
 #define PIN_SERIAL2_TX (0 + 10)
 //  #define PIN_SERIAL2_EN (0 + 17)
 
+/* Moire Moisture */
+#define MOIRE_MOISTURE_PIN 33
+
 /*
  * I2C
  */

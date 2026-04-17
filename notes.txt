@@ -1,0 +1,10 @@
+---- SENSOR NODE ----
+PIO env: moire_sensor_node
+Macro in platformio.ini - MOIRE_MOISTURE_SENSOR - Enables moisture sensor
+Sensor Object Name in MOIREMOISTURE.h - MOIREMOISTURESensor
+DeviceType in ScanI2C.h - MOIREMOISTURE
+Telemetry Sensor Type - meshtastic_TelemetrySensorType_SENSOR_UNSET,
+
+---- GATEWAY ----
+PIO env: moire_gateway
+Macro in platformio.ini - MOIRE_GATEWAY - Enables gateway functionality
