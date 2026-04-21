@@ -19,6 +19,12 @@
 // PARSING IN MoireSensorModule.c
 #define MOIRE_BOARD_2026 1
 
+// MOIRE_VERSION is defined in variant.h for sensor nodes. Routers and gateways
+// don't carry a board version, so default to 0 to keep the code compilable.
+#ifndef MOIRE_VERSION
+#define MOIRE_VERSION 0
+#endif
+
 /**
  * Payload broadcast by a sensor node after wakeup.
  * Packed to guarantee a fixed 20-byte on-air size regardless of platform
