@@ -101,6 +101,7 @@ class MoireSensorModule : public MeshModule, private concurrency::OSThread, publ
     float cachedLux = 0.0f;
     uint8_t cachedBatteryPercentage = 0;
     uint32_t cachedSleepTimeMs = 0;
+    uint32_t wakeupReceivedAt = 0; // millis() when wakeup packet was received
 
     bool sensorsReady = false;
 

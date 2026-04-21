@@ -119,7 +119,8 @@ void MoireSensorModule::triggerReading(uint32_t sleepTimeMs)
     }
 
     cachedSleepTimeMs = sleepTimeMs;
-    LOG_INFO("Recieved Sleep Time: %d ms", cachedSleepTimeMs);
+    wakeupReceivedAt = millis();
+    LOG_INFO("Received Sleep Time: %d ms", cachedSleepTimeMs);
 
     LOG_INFO("MoireSensor: starting sensor read");
     cachedBatteryPercentage = powerStatus->getBatteryChargePercent();
@@ -179,16 +180,17 @@ int32_t MoireSensorModule::runOnce()
         state = ReadState::SENDING;
         sendSensorData(cachedTemp, cachedHumidity, cachedLux, (float)pulseCount, cachedBatteryPercentage);
 
-        // We wait 10 seconds before running this thread agian in sending mode so
-        // that radio has time to send sensor reading We will skipPreflight in
-        // doDeepSleep, so we need to make sure we wait long enough
-        return 10000;
+        // Stay awake 30 seconds after sending so the radio has time to transmit
+        // and relay any other nodes' packets before sleeping.
+        return 30000;
     }
 
     else if (state == ReadState::SENDING) {
         state = ReadState::IDLE;
-        LOG_INFO("Done sending: going to sleep for %u ms", cachedSleepTimeMs);
-        doDeepSleep(cachedSleepTimeMs, true, false);
+        uint32_t elapsed = millis() - wakeupReceivedAt;
+        uint32_t actualSleep = (elapsed < cachedSleepTimeMs) ? (cachedSleepTimeMs - elapsed) : 1000;
+        LOG_INFO("Done sending: elapsed=%u ms, sleeping for %u ms", elapsed, actualSleep);
+        doDeepSleep(actualSleep, true, false);
     }
 
     // Park the thread until the next triggerReading() call.
