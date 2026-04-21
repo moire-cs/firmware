@@ -168,17 +168,21 @@ int32_t MoireSensorModule::runOnce()
 {
     if (state == ReadState::COUNTING) {
 #ifdef MOIRE_MOISTURE_SENSOR
-        uint32_t pulseCount = pcntGetCount();
+        cachedPulseCount = (float)pcntGetCount();
 #else
-        uint32_t pulseCount = 0;
+        cachedPulseCount = 0.0f;
 #endif
-        LOG_DEBUG("MoireSensor: pulseCount=%u", pulseCount);
+        LOG_DEBUG("MoireSensor: pulseCount=%.0f", cachedPulseCount);
 
-        // We set the state to sending, send the mesh packet to the queue, then
-        // schedule runOnce() to be called again in two seconds, where the sleep
-        // route is then taken
+        // Jitter before sending so nodes woken by the same broadcast don't all
+        // transmit simultaneously
+        state = ReadState::JITTERING;
+        return random(0, 3000);
+    }
+
+    else if (state == ReadState::JITTERING) {
         state = ReadState::SENDING;
-        sendSensorData(cachedTemp, cachedHumidity, cachedLux, (float)pulseCount, cachedBatteryPercentage);
+        sendSensorData(cachedTemp, cachedHumidity, cachedLux, cachedPulseCount, cachedBatteryPercentage);
 
         // Stay awake 30 seconds after sending so the radio has time to transmit
         // and relay any other nodes' packets before sleeping.

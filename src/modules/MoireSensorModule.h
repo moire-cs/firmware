@@ -92,13 +92,14 @@ class MoireSensorModule : public MeshModule, private concurrency::OSThread, publ
     //   for the message to be sent
     //     We use this state to ensure that enough time has passed for the message
     //     to be sent before sleeping
-    enum class ReadState { IDLE, COUNTING, SENDING };
+    enum class ReadState { IDLE, COUNTING, JITTERING, SENDING };
     ReadState state = ReadState::IDLE;
 
     // Fast-sensor results cached between the two runOnce() calls
     float cachedTemp = 0.0f;
     float cachedHumidity = 0.0f;
     float cachedLux = 0.0f;
+    float cachedPulseCount = 0.0f;
     uint8_t cachedBatteryPercentage = 0;
     uint32_t cachedSleepTimeMs = 0;
     uint32_t wakeupReceivedAt = 0; // millis() when wakeup packet was received
