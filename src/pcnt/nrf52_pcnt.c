@@ -1,3 +1,4 @@
+#ifdef NRF52_SERIES
 #include <nrfx.h>
 #include <nrfx_gpiote.h>
 #include <nrfx_ppi.h>
@@ -98,3 +99,4 @@ void pcntClear()
 {
     nrfx_timer_clear(&counter);
 }
+#endif // NRF52_SERIES

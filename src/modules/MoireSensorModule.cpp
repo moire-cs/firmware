@@ -272,7 +272,8 @@ ProcessMessage MoireSensorModule::handleReceived(const meshtastic_MeshPacket &mp
 #endif
 
 #ifdef MOIRE_ROUTER
-    LOG_INFO("Moire Router: Rebroadcasting reading from 0x%08x", payload.nodeId);
+    LOG_INFO("Moire Router: 0x%08x T=%.1fC H=%.0f%% lux=%.0f M=%.0f bat=%d%%", payload.nodeId, payload.temperature,
+             payload.humidity, payload.lux, payload.pulseCount, payload.batteryPercentage);
 #endif
 
     return ProcessMessage::CONTINUE;

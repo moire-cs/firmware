@@ -1,6 +1,8 @@
 #ifndef NRF52_PCNT
 #define NRF52_PCNT
 
+#ifdef ARCH_NRF52
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -24,4 +26,5 @@ uint32_t pcntGetCount(void);
 }
 #endif
 
-#endif
+#endif // ARCH_NRF52
+#endif // NRF52_PCNT
