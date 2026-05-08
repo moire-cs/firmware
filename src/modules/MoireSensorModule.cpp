@@ -76,9 +76,11 @@ void MoireSensorModule::i2cScanFinished(ScanI2C *i2cScanner)
 #ifdef MOIRE_MOISTURE_SENSOR
     if (pcntInit(MOIRE_MOISTURE_PIN) == NRFX_SUCCESS) {
         LOG_INFO("MoireSensor: moisture pulse counter initialised on pin %d", MOIRE_MOISTURE_PIN);
+        pcntReady = true;
         sensorsReady = true;
     } else {
         LOG_WARN("MoireSensor: moisture pulse counter init failed on pin %d", MOIRE_MOISTURE_PIN);
+        sensorsReady = false;
     }
 #endif
 
@@ -149,9 +151,13 @@ void MoireSensorModule::triggerReading(uint32_t sleepTimeMs)
     // The counter must run for exactly 500 ms before being read — we do this
     // non-blocking by scheduling runOnce() to fire 500 ms from now.
 #ifdef MOIRE_MOISTURE_SENSOR
-    pcntClear();
-    state = ReadState::COUNTING;
-    setIntervalFromNow(500);
+    if (pcntReady) {
+        pcntClear();
+        state = ReadState::COUNTING;
+        setIntervalFromNow(500);
+    } else {
+        sendSensorData(cachedTemp, cachedHumidity, cachedLux, 0.0f, cachedBatteryPercentage);
+    }
 #else
     // No moisture sensor on this build — send immediately with pulseCount = 0
     sendSensorData(cachedTemp, cachedHumidity, cachedLux, 0.0f, cachedBatteryPercentage);
@@ -168,7 +174,7 @@ int32_t MoireSensorModule::runOnce()
 {
     if (state == ReadState::COUNTING) {
 #ifdef MOIRE_MOISTURE_SENSOR
-        cachedPulseCount = (float)pcntGetCount();
+        cachedPulseCount = pcntReady ? (float)pcntGetCount() : 0.0f;
 #else
         cachedPulseCount = 0.0f;
 #endif

@@ -111,6 +111,7 @@ class MoireSensorModule : public MeshModule, private concurrency::OSThread, publ
     uint32_t wakeupReceivedAt = 0; // millis() when wakeup packet was received
 
     bool sensorsReady = false;
+    bool pcntReady = false;
 
     void sendSensorData(float temp, float humidity, float lux, float pulseCount, uint8_t batteryPercentage);
 };
