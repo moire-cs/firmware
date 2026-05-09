@@ -14,14 +14,21 @@ extern "C" {
 
 // pcntInit: Initialize pulse counter on../../nrf52_pcnt.h../../nrf52_pcnt.h
 // param pin
-nrfx_err_t pcntInit(int pin);
+nrfx_err_t pcntInit(int pin, uint16_t measureTimeMs);
 
-// pcntClear: Resets value of counter to zero
-void pcntClear(void);
+// pcntClearCounter: Resets value of counter to zero
+void pcntClearCounter(void);
 
-// pcntGetCount: Capture current value of counter and return it
+// pcntClearTimer: Resets value of timer to zero
+void pcntClearTimer(void);
+
+// pcntCaptureAndGetCount: Capture current value of counter and return it
+// Since we're using PPI to capture the counter value, should not need to used
+// this function, and pcntGetCount should be used instead
+uint32_t pcntCaptureAndGetCount(void);
+
+// pcntGetCount: Get the last captured value of counter
 uint32_t pcntGetCount(void);
-
 #ifdef __cplusplus
 }
 #endif

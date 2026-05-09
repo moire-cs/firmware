@@ -74,10 +74,15 @@ void MoireSensorModule::i2cScanFinished(ScanI2C *i2cScanner)
 #endif
 
 #ifdef MOIRE_MOISTURE_SENSOR
-    if (pcntInit(MOIRE_MOISTURE_PIN) == NRFX_SUCCESS) {
+    if (pcntInit(MOIRE_MOISTURE_PIN, MOIRE_MEASUREMENT_TIME_MS) == NRFX_SUCCESS) {
         LOG_INFO("MoireSensor: moisture pulse counter initialised on pin %d", MOIRE_MOISTURE_PIN);
         pcntReady = true;
         sensorsReady = true;
+        pcntTestMode = false; // Change this to true to test the pulse counter
+        pcntTestCount = 0;
+        pcntClearCounter();
+        pcntClearTimer();
+        setIntervalFromNow(MOIRE_MEASUREMENT_TIME_MS + 100);
     } else {
         LOG_WARN("MoireSensor: moisture pulse counter init failed on pin %d", MOIRE_MOISTURE_PIN);
         sensorsReady = false;
@@ -148,13 +153,14 @@ void MoireSensorModule::triggerReading(uint32_t sleepTimeMs)
 #endif
 
     // Start the moisture pulse counter.
-    // The counter must run for exactly 500 ms before being read — we do this
-    // non-blocking by scheduling runOnce() to fire 500 ms from now.
+    // The counter value will be captured after MOIRE_MEASUREMENT_TIME_MS
+    // We schedule OSThread to run 100 ms after this to give time for count to be
+    // captured, may be a bit overkill
 #ifdef MOIRE_MOISTURE_SENSOR
     if (pcntReady) {
-        pcntClear();
+        pcntClearCounter();
         state = ReadState::COUNTING;
-        setIntervalFromNow(500);
+        setIntervalFromNow(MOIRE_MEASUREMENT_TIME_MS + 100);
     } else {
         sendSensorData(cachedTemp, cachedHumidity, cachedLux, 0.0f, cachedBatteryPercentage);
     }
@@ -172,6 +178,23 @@ void MoireSensorModule::triggerReading(uint32_t sleepTimeMs)
 
 int32_t MoireSensorModule::runOnce()
 {
+#ifdef MOIRE_MOISTURE_SENSOR
+    // Useful for verifying the pulse counter
+    if (pcntTestMode) {
+        uint32_t count = pcntGetCount();
+        LOG_INFO("MoireSensor [test %d/%d]: pulseCount=%u", pcntTestCount + 1, PCNT_TEST_RUNS, count);
+        pcntClearCounter();
+        pcntClearTimer();
+        pcntTestCount++;
+        if (pcntTestCount >= PCNT_TEST_RUNS) {
+            pcntTestMode = false;
+            LOG_INFO("MoireSensor: counter test complete");
+            return INT32_MAX;
+        }
+        return MOIRE_MEASUREMENT_TIME_MS + 100;
+    }
+#endif
+
     if (state == ReadState::COUNTING) {
 #ifdef MOIRE_MOISTURE_SENSOR
         cachedPulseCount = pcntReady ? (float)pcntGetCount() : 0.0f;

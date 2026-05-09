@@ -13,6 +13,9 @@
 // needed.
 #define MOIRE_SENSOR_PORTNUM ((meshtastic_PortNum)257)
 
+// The amount of time we count pulses for when measuring soil moisture
+#define MOIRE_MEASUREMENT_TIME_MS 500
+
 // MOIRE NODE VERSIONS: IF YOU CREATE A NEW VERSION OF THE MOIRE BOARD WITH
 // DIFFERENT SENSORS, ADD A MACRO, DEFINE IT IN THE NEW VARIANT.H as #define
 // MOIRE_VERSION 2, define it here as #define MOIRE_BOARD_X 2 AND ADD NEW
@@ -112,6 +115,12 @@ class MoireSensorModule : public MeshModule, private concurrency::OSThread, publ
 
     bool sensorsReady = false;
     bool pcntReady = false;
+
+#ifdef MOIRE_MOISTURE_SENSOR
+    bool pcntTestMode = false;
+    int pcntTestCount = 0;
+    static constexpr int PCNT_TEST_RUNS = 10;
+#endif
 
     void sendSensorData(float temp, float humidity, float lux, float pulseCount, uint8_t batteryPercentage);
 };
