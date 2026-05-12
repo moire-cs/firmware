@@ -158,6 +158,7 @@ void MoireSensorModule::triggerReading(uint32_t sleepTimeMs)
     // captured, may be a bit overkill
 #ifdef MOIRE_MOISTURE_SENSOR
     if (pcntReady) {
+        pcntClearTimer();
         pcntClearCounter();
         state = ReadState::COUNTING;
         setIntervalFromNow(MOIRE_MEASUREMENT_TIME_MS + 100);
