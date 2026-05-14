@@ -13,11 +13,20 @@
 // needed.
 #define MOIRE_SENSOR_PORTNUM ((meshtastic_PortNum)257)
 
+// The amount of time we count pulses for when measuring soil moisture
+#define MOIRE_MEASUREMENT_TIME_MS 500
+
 // MOIRE NODE VERSIONS: IF YOU CREATE A NEW VERSION OF THE MOIRE BOARD WITH
 // DIFFERENT SENSORS, ADD A MACRO, DEFINE IT IN THE NEW VARIANT.H as #define
 // MOIRE_VERSION 2, define it here as #define MOIRE_BOARD_X 2 AND ADD NEW
 // PARSING IN MoireSensorModule.c
 #define MOIRE_BOARD_2026 1
+
+// MOIRE_VERSION is defined in variant.h for sensor nodes. Routers and gateways
+// don't carry a board version, so default to 0 to keep the code compilable.
+#ifndef MOIRE_VERSION
+#define MOIRE_VERSION 0
+#endif
 
 /**
  * Payload broadcast by a sensor node after wakeup.
@@ -92,17 +101,26 @@ class MoireSensorModule : public MeshModule, private concurrency::OSThread, publ
     //   for the message to be sent
     //     We use this state to ensure that enough time has passed for the message
     //     to be sent before sleeping
-    enum class ReadState { IDLE, COUNTING, SENDING };
+    enum class ReadState { IDLE, COUNTING, JITTERING, SENDING };
     ReadState state = ReadState::IDLE;
 
     // Fast-sensor results cached between the two runOnce() calls
     float cachedTemp = 0.0f;
     float cachedHumidity = 0.0f;
     float cachedLux = 0.0f;
+    float cachedPulseCount = 0.0f;
     uint8_t cachedBatteryPercentage = 0;
     uint32_t cachedSleepTimeMs = 0;
+    uint32_t wakeupReceivedAt = 0; // millis() when wakeup packet was received
 
     bool sensorsReady = false;
+    bool pcntReady = false;
+
+#ifdef MOIRE_MOISTURE_SENSOR
+    bool pcntTestMode = false;
+    int pcntTestCount = 0;
+    static constexpr int PCNT_TEST_RUNS = 10;
+#endif
 
     void sendSensorData(float temp, float humidity, float lux, float pulseCount, uint8_t batteryPercentage);
 };

@@ -12,7 +12,7 @@ MOIREMOISTURESensor::MOIREMOISTURESensor() : TelemetrySensor(meshtastic_Telemetr
 bool MOIREMOISTURESensor::initDevice(TwoWire *bus, ScanI2C::FoundDevice *dev)
 {
     LOG_INFO("Init sensor: %s", sensorName);
-    status = (pcntInit(MOIRE_MOISTURE_PIN) == NRFX_SUCCESS);
+    status = (pcntInit(MOIRE_MOISTURE_PIN, MEASURE_TIME_MS) == NRFX_SUCCESS);
 
     initI2CSensor();
     return status;
@@ -22,8 +22,9 @@ bool MOIREMOISTURESensor::getMetrics(meshtastic_Telemetry *measurement)
 {
     uint32_t pulseCount;
 
-    pcntClear();
-    delay(500);
+    pcntClearTimer();
+    pcntClearCounter();
+    delay(MEASURE_TIME_MS + 100);
     pulseCount = pcntGetCount();
 
     // We use soil temperature to transmit pulseCount since soil moisture is an 8

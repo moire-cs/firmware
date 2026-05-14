@@ -74,11 +74,18 @@ void MoireSensorModule::i2cScanFinished(ScanI2C *i2cScanner)
 #endif
 
 #ifdef MOIRE_MOISTURE_SENSOR
-    if (pcntInit(MOIRE_MOISTURE_PIN) == NRFX_SUCCESS) {
+    if (pcntInit(MOIRE_MOISTURE_PIN, MOIRE_MEASUREMENT_TIME_MS) == NRFX_SUCCESS) {
         LOG_INFO("MoireSensor: moisture pulse counter initialised on pin %d", MOIRE_MOISTURE_PIN);
+        pcntReady = true;
         sensorsReady = true;
+        pcntTestMode = false; // Change this to true to test the pulse counter
+        pcntTestCount = 0;
+        pcntClearCounter();
+        pcntClearTimer();
+        setIntervalFromNow(MOIRE_MEASUREMENT_TIME_MS + 100);
     } else {
         LOG_WARN("MoireSensor: moisture pulse counter init failed on pin %d", MOIRE_MOISTURE_PIN);
+        sensorsReady = false;
     }
 #endif
 
@@ -119,7 +126,8 @@ void MoireSensorModule::triggerReading(uint32_t sleepTimeMs)
     }
 
     cachedSleepTimeMs = sleepTimeMs;
-    LOG_INFO("Recieved Sleep Time: %d ms", cachedSleepTimeMs);
+    wakeupReceivedAt = millis();
+    LOG_INFO("Received Sleep Time: %d ms", cachedSleepTimeMs);
 
     LOG_INFO("MoireSensor: starting sensor read");
     cachedBatteryPercentage = powerStatus->getBatteryChargePercent();
@@ -145,12 +153,18 @@ void MoireSensorModule::triggerReading(uint32_t sleepTimeMs)
 #endif
 
     // Start the moisture pulse counter.
-    // The counter must run for exactly 500 ms before being read — we do this
-    // non-blocking by scheduling runOnce() to fire 500 ms from now.
+    // The counter value will be captured after MOIRE_MEASUREMENT_TIME_MS
+    // We schedule OSThread to run 100 ms after this to give time for count to be
+    // captured, may be a bit overkill
 #ifdef MOIRE_MOISTURE_SENSOR
-    pcntClear();
-    state = ReadState::COUNTING;
-    setIntervalFromNow(500);
+    if (pcntReady) {
+        pcntClearTimer();
+        pcntClearCounter();
+        state = ReadState::COUNTING;
+        setIntervalFromNow(MOIRE_MEASUREMENT_TIME_MS + 100);
+    } else {
+        sendSensorData(cachedTemp, cachedHumidity, cachedLux, 0.0f, cachedBatteryPercentage);
+    }
 #else
     // No moisture sensor on this build — send immediately with pulseCount = 0
     sendSensorData(cachedTemp, cachedHumidity, cachedLux, 0.0f, cachedBatteryPercentage);
@@ -165,30 +179,52 @@ void MoireSensorModule::triggerReading(uint32_t sleepTimeMs)
 
 int32_t MoireSensorModule::runOnce()
 {
+#ifdef MOIRE_MOISTURE_SENSOR
+    // Useful for verifying the pulse counter
+    if (pcntTestMode) {
+        uint32_t count = pcntGetCount();
+        LOG_INFO("MoireSensor [test %d/%d]: pulseCount=%u", pcntTestCount + 1, PCNT_TEST_RUNS, count);
+        pcntClearCounter();
+        pcntClearTimer();
+        pcntTestCount++;
+        if (pcntTestCount >= PCNT_TEST_RUNS) {
+            pcntTestMode = false;
+            LOG_INFO("MoireSensor: counter test complete");
+            return INT32_MAX;
+        }
+        return MOIRE_MEASUREMENT_TIME_MS + 100;
+    }
+#endif
+
     if (state == ReadState::COUNTING) {
 #ifdef MOIRE_MOISTURE_SENSOR
-        uint32_t pulseCount = pcntGetCount();
+        cachedPulseCount = pcntReady ? (float)pcntGetCount() : 0.0f;
 #else
-        uint32_t pulseCount = 0;
+        cachedPulseCount = 0.0f;
 #endif
-        LOG_DEBUG("MoireSensor: pulseCount=%u", pulseCount);
+        LOG_DEBUG("MoireSensor: pulseCount=%.0f", cachedPulseCount);
 
-        // We set the state to sending, send the mesh packet to the queue, then
-        // schedule runOnce() to be called again in two seconds, where the sleep
-        // route is then taken
+        // Jitter before sending so nodes woken by the same broadcast don't all
+        // transmit simultaneously
+        state = ReadState::JITTERING;
+        return random(0, 3000);
+    }
+
+    else if (state == ReadState::JITTERING) {
         state = ReadState::SENDING;
-        sendSensorData(cachedTemp, cachedHumidity, cachedLux, (float)pulseCount, cachedBatteryPercentage);
+        sendSensorData(cachedTemp, cachedHumidity, cachedLux, cachedPulseCount, cachedBatteryPercentage);
 
-        // We wait 10 seconds before running this thread agian in sending mode so
-        // that radio has time to send sensor reading We will skipPreflight in
-        // doDeepSleep, so we need to make sure we wait long enough
-        return 10000;
+        // Stay awake 30 seconds after sending so the radio has time to transmit
+        // and relay any other nodes' packets before sleeping.
+        return 30000;
     }
 
     else if (state == ReadState::SENDING) {
         state = ReadState::IDLE;
-        LOG_INFO("Done sending: going to sleep for %u ms", cachedSleepTimeMs);
-        doDeepSleep(cachedSleepTimeMs, true, false);
+        uint32_t elapsed = millis() - wakeupReceivedAt;
+        uint32_t actualSleep = (elapsed < cachedSleepTimeMs) ? (cachedSleepTimeMs - elapsed) : 1000;
+        LOG_INFO("Done sending: elapsed=%u ms, sleeping for %u ms", elapsed, actualSleep);
+        doDeepSleep(actualSleep, true, false);
     }
 
     // Park the thread until the next triggerReading() call.
@@ -266,7 +302,8 @@ ProcessMessage MoireSensorModule::handleReceived(const meshtastic_MeshPacket &mp
 #endif
 
 #ifdef MOIRE_ROUTER
-    LOG_INFO("Moire Router: Rebroadcasting reading from 0x%08x", payload.nodeId);
+    LOG_INFO("Moire Router: 0x%08x T=%.1fC H=%.0f%% lux=%.0f M=%.0f bat=%d%%", payload.nodeId, payload.temperature,
+             payload.humidity, payload.lux, payload.pulseCount, payload.batteryPercentage);
 #endif
 
     return ProcessMessage::CONTINUE;

@@ -8,6 +8,8 @@
 #include "../mesh/generated/meshtastic/telemetry.pb.h"
 #include "TelemetrySensor.h"
 
+#define MEASURE_TIME_MS 500
+
 class MOIREMOISTURESensor : public TelemetrySensor
 {
   public:
