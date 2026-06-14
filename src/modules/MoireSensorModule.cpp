@@ -89,7 +89,7 @@ void MoireSensorModule::i2cScanFinished(ScanI2C *i2cScanner)
     }
 #endif
 
-    config.device.role = meshtastic_Config_DeviceConfig_Role_SENSOR;
+    config.device.role = meshtastic_Config_DeviceConfig_Role_CLIENT;
     config.power.is_power_saving = true;
 
 #endif // !MOIRE_GATEWAY && !MOIRE_ROUTER
